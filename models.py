@@ -34,7 +34,6 @@ class User(UserMixin, db.Model):
     itineraries = db.relationship('Itinerary', backref='user', lazy=True)
     badges = db.relationship('Badge', secondary=user_badges, backref='users', lazy='dynamic')
 
-    # Add followers relationship
     followed = db.relationship(
         'User', secondary=followers,
         primaryjoin=(followers.c.follower_id == id),
@@ -61,7 +60,6 @@ class User(UserMixin, db.Model):
         return self.followed.filter(followers.c.followed_id == user.id).count() > 0
 
     def check_and_award_badges(self):
-        # Places visited badges
         places_count = len(self.locations)
         for threshold in [1, 5, 10, 25, 50]:
             if places_count >= threshold:
@@ -72,7 +70,6 @@ class User(UserMixin, db.Model):
                 if badge and badge not in self.badges:
                     self.badges.append(badge)
 
-        # Countries visited badges
         countries = set(loc.country for loc in self.locations if loc.country)
         countries_count = len(countries)
         for threshold in [1, 3, 5, 10, 20]:
@@ -84,7 +81,6 @@ class User(UserMixin, db.Model):
                 if badge and badge not in self.badges:
                     self.badges.append(badge)
 
-        # Social badges (followers)
         followers_count = self.followers.count()
         for threshold in [1, 10, 50, 100]:
             if followers_count >= threshold:
@@ -95,11 +91,21 @@ class User(UserMixin, db.Model):
                 if badge and badge not in self.badges:
                     self.badges.append(badge)
 
+class Expense(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    location_id = db.Column(db.Integer, db.ForeignKey('location.id'), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    category = db.Column(db.String(64), nullable=False)  # e.g., 'accommodation', 'food', 'transport', 'activities'
+    description = db.Column(db.String(256))
+    date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    currency = db.Column(db.String(3), nullable=False, default='USD')  # ISO currency code
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 class Location(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(120), nullable=False)
-    country = db.Column(db.String(64))  # Added country field
+    country = db.Column(db.String(64))
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
     rating = db.Column(db.Integer)
@@ -108,6 +114,23 @@ class Location(db.Model):
     visited_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     itinerary_stops = db.relationship('ItineraryStop', backref='location', lazy=True)
+    expenses = db.relationship('Expense', backref='location', lazy=True, cascade='all, delete-orphan')
+
+    def get_expense_summary(self):
+        total = 0
+        by_category = {}
+
+        for expense in self.expenses:
+            total += expense.amount
+            if expense.category not in by_category:
+                by_category[expense.category] = 0
+            by_category[expense.category] += expense.amount
+
+        return {
+            'total': round(total, 2),
+            'by_category': {k: round(v, 2) for k, v in by_category.items()},
+            'currency': self.expenses[0].currency if self.expenses else 'USD'
+        }
 
 class Itinerary(db.Model):
     id = db.Column(db.Integer, primary_key=True)

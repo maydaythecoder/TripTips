@@ -1,8 +1,9 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db, login_manager
-from models import User, Location, Itinerary, ItineraryStop, Badge
+from models import User, Location, Itinerary, ItineraryStop, Badge, Expense
 from datetime import datetime
+from sqlalchemy import func
 
 @login_manager.user_loader
 def load_user(id):
@@ -271,3 +272,48 @@ def unfollow(username):
 def users():
     users = User.query.filter(User.id != current_user.id).all()
     return render_template('users.html', users=users)
+
+
+@app.route('/locations/<int:location_id>/expenses', methods=['POST'])
+@login_required
+def add_expense(location_id):
+    location = Location.query.get_or_404(location_id)
+    if location.user_id != current_user.id:
+        flash('Access denied')
+        return redirect(url_for('locations'))
+
+    expense = Expense(
+        location_id=location_id,
+        amount=float(request.form['amount']),
+        category=request.form['category'],
+        description=request.form['description'],
+        currency=request.form['currency'],
+        date=datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+    )
+    db.session.add(expense)
+    db.session.commit()
+
+    flash('Expense added successfully')
+    return redirect(url_for('view_location', id=location_id))
+
+@app.route('/locations/<int:location_id>/expenses/summary')
+@login_required
+def expense_summary(location_id):
+    location = Location.query.get_or_404(location_id)
+    if location.user_id != current_user.id:
+        flash('Access denied')
+        return redirect(url_for('locations'))
+
+    summary = location.get_expense_summary()
+    return jsonify(summary)
+
+@app.route('/locations/<int:id>')
+@login_required
+def view_location(id):
+    location = Location.query.get_or_404(id)
+    if location.user_id != current_user.id:
+        flash('Access denied')
+        return redirect(url_for('locations'))
+
+    summary = location.get_expense_summary()
+    return render_template('locations/view.html', location=location, expense_summary=summary)
