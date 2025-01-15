@@ -55,24 +55,33 @@ def logout():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('profile.html')
+    # Order locations by visited date
+    recent_locations = Location.query.filter_by(user_id=current_user.id)\
+        .order_by(Location.visited_at.desc())\
+        .limit(3)\
+        .all()
+    return render_template('profile.html', recent_locations=recent_locations)
 
 @app.route('/locations', methods=['GET', 'POST'])
 @login_required
 def locations():
     if request.method == 'POST':
+        # Generate image URL based on location name using Unsplash source
+        image_url = f"https://source.unsplash.com/800x600/?{request.form['name'].replace(' ', '+')},city"
+
         location = Location(
             user_id=current_user.id,
             name=request.form['name'],
             latitude=float(request.form['latitude']),
             longitude=float(request.form['longitude']),
             rating=int(request.form['rating']),
-            description=request.form['description']
+            description=request.form['description'],
+            image_url=image_url
         )
         db.session.add(location)
         db.session.commit()
         return redirect(url_for('locations'))
-    
+
     locations = Location.query.filter_by(user_id=current_user.id).all()
     return render_template('locations.html', locations=locations)
 
@@ -84,7 +93,8 @@ def get_locations():
         'name': loc.name,
         'latitude': loc.latitude,
         'longitude': loc.longitude,
-        'rating': loc.rating
+        'rating': loc.rating,
+        'image_url': loc.image_url
     } for loc in locations])
 
 @app.route('/itineraries')

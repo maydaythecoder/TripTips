@@ -26,6 +26,7 @@ class Location(db.Model):
     longitude = db.Column(db.Float, nullable=False)
     rating = db.Column(db.Integer)
     description = db.Column(db.Text)
+    image_url = db.Column(db.String(500))
     visited_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     itinerary_stops = db.relationship('ItineraryStop', backref='location', lazy=True)

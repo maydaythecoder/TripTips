@@ -12,21 +12,71 @@
                 </p>
             </div>
         </div>
-    </div>
-    <div class="col-md-8">
-        <div class="card">
+
+        <div class="card mt-4">
             <div class="card-body">
-                <h3 class="card-title">Your Travel Statistics</h3>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="text-center">
-                            <h4>{{ current_user.locations|length }}</h4>
-                            <p>Places Visited</p>
-                        </div>
+                <h4 class="card-title">Travel Statistics</h4>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h2>{{ current_user.locations|length }}</h2>
+                        <p>Places Visited</p>
+                    </div>
+                    <div class="col-6">
+                        <h2>{{ current_user.itineraries|length }}</h2>
+                        <p>Travel Plans</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title mb-4">My Travel Map</h3>
+                <div id="profileMap" style="height: 400px;"></div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h3 class="card-title mb-4">Recent Destinations</h3>
+                <div class="row">
+                    {% for location in current_user.locations[-3:] %}
+                    <div class="col-md-4">
+                        <div class="card">
+                            {% if location.image_url %}
+                            <img src="{{ location.image_url }}" class="card-img-top" alt="{{ location.name }}">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ location.name }}</h5>
+                                <p class="card-text">
+                                    Rating: {{ "★" * location.rating }}
+                                </p>
+                                <small class="text-muted">
+                                    Visited: {{ location.visited_at.strftime('%B %d, %Y') }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize map for profile
+    const profileMap = L.map('profileMap').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(profileMap);
+});
+</script>
 {% endblock %}

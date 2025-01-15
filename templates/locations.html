@@ -41,7 +41,10 @@
         <div class="row">
             {% for location in locations %}
             <div class="col-md-4 mb-3">
-                <div class="card">
+                <div class="card h-100">
+                    {% if location.image_url %}
+                    <img src="{{ location.image_url }}" class="card-img-top" alt="{{ location.name }}">
+                    {% endif %}
                     <div class="card-body">
                         <h5 class="card-title">{{ location.name }}</h5>
                         <p class="card-text">Rating: {{ "★" * location.rating }}</p>
