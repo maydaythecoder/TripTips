@@ -9,6 +9,21 @@ followers = db.Table('followers',
     db.Column('followed_id', db.Integer, db.ForeignKey('user.id'))
 )
 
+# Association table for user badges
+user_badges = db.Table('user_badges',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('badge_id', db.Integer, db.ForeignKey('badge.id'))
+)
+
+class Badge(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True, nullable=False)
+    description = db.Column(db.String(256))
+    icon = db.Column(db.String(128))  # SVG icon path
+    badge_type = db.Column(db.String(64))  # e.g., 'places', 'countries', 'ratings', 'social'
+    requirement = db.Column(db.Integer)  # Number required to earn the badge
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
@@ -17,6 +32,7 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     locations = db.relationship('Location', backref='user', lazy=True)
     itineraries = db.relationship('Itinerary', backref='user', lazy=True)
+    badges = db.relationship('Badge', secondary=user_badges, backref='users', lazy='dynamic')
 
     # Add followers relationship
     followed = db.relationship(
@@ -44,10 +60,46 @@ class User(UserMixin, db.Model):
     def is_following(self, user):
         return self.followed.filter(followers.c.followed_id == user.id).count() > 0
 
+    def check_and_award_badges(self):
+        # Places visited badges
+        places_count = len(self.locations)
+        for threshold in [1, 5, 10, 25, 50]:
+            if places_count >= threshold:
+                badge = Badge.query.filter_by(
+                    badge_type='places', 
+                    requirement=threshold
+                ).first()
+                if badge and badge not in self.badges:
+                    self.badges.append(badge)
+
+        # Countries visited badges
+        countries = set(loc.country for loc in self.locations if loc.country)
+        countries_count = len(countries)
+        for threshold in [1, 3, 5, 10, 20]:
+            if countries_count >= threshold:
+                badge = Badge.query.filter_by(
+                    badge_type='countries', 
+                    requirement=threshold
+                ).first()
+                if badge and badge not in self.badges:
+                    self.badges.append(badge)
+
+        # Social badges (followers)
+        followers_count = self.followers.count()
+        for threshold in [1, 10, 50, 100]:
+            if followers_count >= threshold:
+                badge = Badge.query.filter_by(
+                    badge_type='social', 
+                    requirement=threshold
+                ).first()
+                if badge and badge not in self.badges:
+                    self.badges.append(badge)
+
 class Location(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(120), nullable=False)
+    country = db.Column(db.String(64))  # Added country field
     latitude = db.Column(db.Float, nullable=False)
     longitude = db.Column(db.Float, nullable=False)
     rating = db.Column(db.Integer)

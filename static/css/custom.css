@@ -32,3 +32,22 @@
 .alert {
     border-radius: 8px;
 }
+
+/* Badge styles */
+.badge-icon {
+    font-size: 2em;
+    color: var(--bs-warning);
+    transition: transform 0.2s;
+    cursor: help;
+}
+
+.badge-icon:hover {
+    transform: scale(1.1);
+}
+
+.badge-icon i {
+    padding: 10px;
+    border-radius: 50%;
+    background-color: var(--bs-gray-800);
+    border: 2px solid var(--bs-warning);
+}

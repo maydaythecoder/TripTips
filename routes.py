@@ -1,12 +1,67 @@
 from flask import render_template, redirect, url_for, request, flash, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
 from app import app, db, login_manager
-from models import User, Location, Itinerary, ItineraryStop
+from models import User, Location, Itinerary, ItineraryStop, Badge
 from datetime import datetime
 
 @login_manager.user_loader
 def load_user(id):
     return db.session.get(User, int(id))
+
+def init_badges():
+    """Initialize default badges if they don't exist"""
+    default_badges = [
+        # Places visited badges
+        {'name': 'First Step', 'description': 'Visit your first place', 'badge_type': 'places', 'requirement': 1,
+         'icon': 'footprints'},
+        {'name': 'Explorer', 'description': 'Visit 5 different places', 'badge_type': 'places', 'requirement': 5,
+         'icon': 'compass'},
+        {'name': 'Adventurer', 'description': 'Visit 10 different places', 'badge_type': 'places', 'requirement': 10,
+         'icon': 'map'},
+        {'name': 'Voyager', 'description': 'Visit 25 different places', 'badge_type': 'places', 'requirement': 25,
+         'icon': 'globe'},
+        {'name': 'World Traveler', 'description': 'Visit 50 different places', 'badge_type': 'places', 'requirement': 50,
+         'icon': 'earth'},
+
+        # Countries badges
+        {'name': 'First Country', 'description': 'Visit your first country', 'badge_type': 'countries', 'requirement': 1,
+         'icon': 'flag'},
+        {'name': 'Globe Trotter', 'description': 'Visit 3 different countries', 'badge_type': 'countries', 'requirement': 3,
+         'icon': 'world'},
+        {'name': 'World Explorer', 'description': 'Visit 5 different countries', 'badge_type': 'countries', 'requirement': 5,
+         'icon': 'earth-americas'},
+        {'name': 'Continental', 'description': 'Visit 10 different countries', 'badge_type': 'countries', 'requirement': 10,
+         'icon': 'globe-americas'},
+        {'name': 'World Citizen', 'description': 'Visit 20 different countries', 'badge_type': 'countries', 'requirement': 20,
+         'icon': 'earth-europe'},
+
+        # Social badges
+        {'name': 'First Follower', 'description': 'Get your first follower', 'badge_type': 'social', 'requirement': 1,
+         'icon': 'user-plus'},
+        {'name': 'Rising Star', 'description': 'Get 10 followers', 'badge_type': 'social', 'requirement': 10,
+         'icon': 'users'},
+        {'name': 'Travel Influencer', 'description': 'Get 50 followers', 'badge_type': 'social', 'requirement': 50,
+         'icon': 'trending-up'},
+        {'name': 'Travel Celebrity', 'description': 'Get 100 followers', 'badge_type': 'social', 'requirement': 100,
+         'icon': 'award'}
+    ]
+
+    for badge_data in default_badges:
+        if not Badge.query.filter_by(name=badge_data['name']).first():
+            badge = Badge(
+                name=badge_data['name'],
+                description=badge_data['description'],
+                badge_type=badge_data['badge_type'],
+                requirement=badge_data['requirement'],
+                icon=f"feather-{badge_data['icon']}"
+            )
+            db.session.add(badge)
+
+    db.session.commit()
+
+# Initialize badges
+with app.app_context():
+    init_badges()
 
 @app.route('/')
 def index():
@@ -16,7 +71,7 @@ def index():
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-    
+
     if request.method == 'POST':
         user = User.query.filter_by(email=request.form['email']).first()
         if user and user.check_password(request.form['password']):
@@ -29,12 +84,12 @@ def login():
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-    
+
     if request.method == 'POST':
         if User.query.filter_by(email=request.form['email']).first():
             flash('Email already registered')
             return redirect(url_for('register'))
-        
+
         user = User(
             username=request.form['username'],
             email=request.form['email']
@@ -55,31 +110,32 @@ def logout():
 @app.route('/profile')
 @login_required
 def profile():
-    # Order locations by visited date
-    recent_locations = Location.query.filter_by(user_id=current_user.id)\
-        .order_by(Location.visited_at.desc())\
-        .limit(3)\
-        .all()
-    return render_template('profile.html', recent_locations=recent_locations)
+    current_user.check_and_award_badges()
+    db.session.commit()
+    return render_template('profile.html')
 
 @app.route('/locations', methods=['GET', 'POST'])
 @login_required
 def locations():
     if request.method == 'POST':
-        # Generate image URL based on location name using Unsplash source
-        image_url = f"https://source.unsplash.com/800x600/?{request.form['name'].replace(' ', '+')},city"
-
+        # Add country extraction from the location name using the Nominatim API
         location = Location(
             user_id=current_user.id,
             name=request.form['name'],
+            country=request.form.get('country'),
             latitude=float(request.form['latitude']),
             longitude=float(request.form['longitude']),
             rating=int(request.form['rating']),
             description=request.form['description'],
-            image_url=image_url
+            image_url=f"https://source.unsplash.com/800x600/?{request.form['name'].replace(' ', '+')},city"
         )
         db.session.add(location)
         db.session.commit()
+
+        # Check for new badges
+        current_user.check_and_award_badges()
+        db.session.commit()
+
         return redirect(url_for('locations'))
 
     locations = Location.query.filter_by(user_id=current_user.id).all()

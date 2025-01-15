@@ -28,6 +28,23 @@
                 </div>
             </div>
         </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h4 class="card-title">Achievements</h4>
+                <div class="row">
+                    {% for badge in current_user.badges %}
+                    <div class="col-4 text-center mb-3">
+                        <div class="badge-icon">
+                            <i class="{{ badge.icon }}" data-bs-toggle="tooltip" 
+                               title="{{ badge.description }}"></i>
+                        </div>
+                        <small class="d-block mt-1">{{ badge.name }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="col-md-8">
@@ -71,6 +88,12 @@
 <script src="{{ url_for('static', filename='js/map.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
     // Initialize map for profile
     const profileMap = L.map('profileMap').setView([0, 0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
