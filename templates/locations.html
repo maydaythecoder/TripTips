@@ -11,17 +11,15 @@
                 <h3 class="card-title">Add Location</h3>
                 <form method="POST">
                     <div class="mb-3">
+                        <label for="citySearch" class="form-label">Search City</label>
+                        <input type="text" class="form-control" id="citySearch" placeholder="Enter city name" autocomplete="off">
+                    </div>
+                    <div class="mb-3">
                         <label for="name" class="form-label">Location Name</label>
                         <input type="text" class="form-control" id="name" name="name" required>
                     </div>
-                    <div class="mb-3">
-                        <label for="latitude" class="form-label">Latitude</label>
-                        <input type="number" step="any" class="form-control" id="latitude" name="latitude" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="longitude" class="form-label">Longitude</label>
-                        <input type="number" step="any" class="form-control" id="longitude" name="longitude" required>
-                    </div>
+                    <input type="hidden" id="latitude" name="latitude" required>
+                    <input type="hidden" id="longitude" name="longitude" required>
                     <div class="mb-3">
                         <label for="rating" class="form-label">Rating (1-5)</label>
                         <input type="number" min="1" max="5" class="form-control" id="rating" name="rating" required>
