@@ -10,10 +10,11 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     locations = db.relationship('Location', backref='user', lazy=True)
-    
+    itineraries = db.relationship('Itinerary', backref='user', lazy=True)
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
-        
+
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
@@ -26,4 +27,23 @@ class Location(db.Model):
     rating = db.Column(db.Integer)
     description = db.Column(db.Text)
     visited_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    itinerary_stops = db.relationship('ItineraryStop', backref='location', lazy=True)
+
+class Itinerary(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.Text)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    stops = db.relationship('ItineraryStop', backref='itinerary', lazy=True, order_by='ItineraryStop.day_number')
+
+class ItineraryStop(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    itinerary_id = db.Column(db.Integer, db.ForeignKey('itinerary.id'), nullable=False)
+    location_id = db.Column(db.Integer, db.ForeignKey('location.id'), nullable=False)
+    day_number = db.Column(db.Integer, nullable=False)
+    notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
