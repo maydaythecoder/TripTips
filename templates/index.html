@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <h1>Welcome to Travel Tracker</h1>
+        <p class="lead">Track your travels, rate locations, and discover new destinations!</p>
+        
+        {% if not current_user.is_authenticated %}
+        <div class="mt-4">
+            <a href="{{ url_for('register') }}" class="btn btn-primary me-2">Get Started</a>
+            <a href="{{ url_for('login') }}" class="btn btn-outline-secondary">Login</a>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <img src="https://images.unsplash.com/photo-1551279076-6887dee32c7e" class="card-img-top" alt="Travel destination">
+            <div class="card-body">
+                <h5 class="card-title">Popular Destinations</h5>
+                <p class="card-text">Explore amazing places around the world!</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="map" class="mt-4" style="height: 400px;"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}

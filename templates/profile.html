@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">{{ current_user.username }}</h3>
+                <p class="card-text">{{ current_user.email }}</p>
+                <p class="card-text">
+                    <small class="text-muted">Member since: {{ current_user.created_at.strftime('%B %d, %Y') }}</small>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title">Your Travel Statistics</h3>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h4>{{ current_user.locations|length }}</h4>
+                            <p>Places Visited</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
