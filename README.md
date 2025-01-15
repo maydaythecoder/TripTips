@@ -46,6 +46,7 @@ A comprehensive web-based travel platform that enables users to track, plan, and
 1. **Prerequisites**
    - Python 3.11 or higher
    - PostgreSQL database
+   - VSCode or Cursor editor
 
 2. **Environment Setup**
    ```bash
@@ -62,6 +63,72 @@ A comprehensive web-based travel platform that enables users to track, plan, and
    python main.py
    ```
    The application will be available at `http://localhost:5000`
+
+## Editor Setup
+
+### VSCode Setup
+1. **Install VSCode Extensions**
+   - Python (Microsoft)
+   - Python IntelliSense
+   - SQLTools (PostgreSQL/Cockroach driver)
+   - GitLens (optional)
+
+2. **Configure Python Environment**
+   ```json
+   // .vscode/settings.json
+   {
+     "python.defaultInterpreterPath": "/path/to/python3.11",
+     "python.linting.enabled": true,
+     "python.linting.pylintEnabled": true,
+     "python.formatting.provider": "black"
+   }
+   ```
+
+3. **Debug Configuration**
+   ```json
+   // .vscode/launch.json
+   {
+     "version": "0.2.0",
+     "configurations": [
+       {
+         "name": "Flask",
+         "type": "python",
+         "request": "launch",
+         "module": "flask",
+         "env": {
+           "FLASK_APP": "main.py",
+           "FLASK_DEBUG": "1"
+         },
+         "args": [
+           "run",
+           "--host=0.0.0.0",
+           "--port=5000"
+         ],
+         "jinja": true
+       }
+     ]
+   }
+   ```
+
+### Cursor Setup
+1. **Initial Setup**
+   - Install Cursor from [cursor.so](https://cursor.so)
+   - Open the project folder in Cursor
+
+2. **Configure Python Environment**
+   - Open Command Palette (Cmd/Ctrl + Shift + P)
+   - Select "Python: Select Interpreter"
+   - Choose Python 3.11
+
+3. **Debug Configuration**
+   - Click the "Run and Debug" icon in the sidebar
+   - Create a `launch.json` file with the same configuration as VSCode above
+
+4. **Recommended Settings**
+   - Enable "Format on Save"
+   - Set Black as the Python formatter
+   - Enable "Auto Import"
+
 
 ## Features in Detail
 
