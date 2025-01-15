@@ -19,7 +19,7 @@ async function geocodeCity(cityName) {
         const response = await fetch(endpoint, {
             headers: {
                 'Accept-Language': 'en',
-                'User-Agent': 'TravelTracker/1.0'
+                'User-Agent': 'TravelTips/1.0'
             }
         });
         const data = await response.json();
